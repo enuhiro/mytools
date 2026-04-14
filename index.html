@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>GitHub Pages URL 生成</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0e0e10; --surface: #1a1a1e; --surface2: #242428; --border: #2e2e34;
+    --accent: #5de6a0; --accent-dim: #1a3d2e; --text: #f0f0f0; --muted: #888;
+    --red: #e24b4a; --red-dim: #2e1414;
+    --mono: 'DM Mono', monospace; --sans: 'Syne', sans-serif;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  body { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; padding: 32px 20px calc(env(safe-area-inset-bottom) + 32px); gap: 16px; }
+  .card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px 24px 24px; }
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .logo-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 1px; }
+  .fixed-user { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; }
+  .fixed-user-label { font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; flex-shrink: 0; }
+  .fixed-user-val { font-family: var(--mono); font-size: 14px; color: var(--accent); }
+  label { display: block; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .field { margin-bottom: 16px; }
+  .input-row { display: flex; gap: 8px; }
+  input[type="text"] { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--mono); font-size: 16px; padding: 13px 14px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; min-width: 0; width: 100%; }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"]::placeholder { color: #444; }
+  .btn-save { background: var(--accent-dim); border: 1px solid #2a5c42; border-radius: 10px; color: var(--accent); font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 0 16px; cursor: pointer; white-space: nowrap; transition: opacity 0.1s, transform 0.1s; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
+  .btn-save:active { transform: scale(0.97); opacity: 0.8; }
+  .url-preview { background: var(--accent-dim); border: 1px solid #2a5c42; border-radius: 12px; padding: 14px; margin: 4px 0 20px; min-height: 54px; display: flex; align-items: center; }
+  .url-text { font-family: var(--mono); font-size: 13px; color: var(--accent); word-break: break-all; line-height: 1.7; flex: 1; }
+  .url-text.empty { color: #3a5c4a; font-size: 12px; }
+  .url-seg { opacity: 0.5; }
+  .url-seg.active { opacity: 1; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button { border: none; border-radius: 10px; font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 14px 10px; cursor: pointer; transition: opacity 0.1s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
+  button:active { transform: scale(0.97); opacity: 0.85; }
+  .btn-copy { background: var(--accent); color: #0a1f15; }
+  .btn-copy.copied { background: #3a8a62; color: #fff; }
+  .btn-open { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+  .hint { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: var(--mono); line-height: 1.7; }
+  .hint span { color: var(--accent); }
+  .history-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px 24px; }
+  .history-title { font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 14px; }
+  .history-empty { font-size: 12px; font-family: var(--mono); color: #444; text-align: center; padding: 12px 0; }
+  .repo-item { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .repo-item:last-child { border-bottom: none; }
+  .repo-info { flex: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .repo-info:active .repo-main { color: var(--accent); }
+  .repo-main { font-family: var(--mono); font-size: 14px; color: var(--text); transition: color 0.1s; }
+  .repo-file { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .btn-del { background: none; border: none; padding: 6px; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; opacity: 0.4; transition: opacity 0.1s; }
+  .btn-del:active { opacity: 1; background: var(--red-dim); }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M3 9L7 13L15 5" stroke="#0a1f15" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">GitHub Pages URL</div>
+      <div class="logo-sub">自動生成ツール</div>
+    </div>
+  </div>
+
+  <div class="fixed-user">
+    <span class="fixed-user-label">User</span>
+    <span class="fixed-user-val">enuhiro</span>
+  </div>
+
+  <div class="field">
+    <label>Repository name</label>
+    <div class="input-row">
+      <input type="text" id="rname" placeholder="例: theta-viewer" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="update()">
+      <button class="btn-save" onclick="saveRepo()">保存</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>HTML ファイル名 <span style="color:#555;font-size:10px">（index.html は省略可）</span></label>
+    <input type="text" id="fname" placeholder="index.html" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="update()">
+  </div>
+
+  <div class="url-preview">
+    <div class="url-text empty" id="url-out">リポジトリ名を入力してください</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-copy" id="btn-copy" onclick="copyUrl()">コピー</button>
+    <button class="btn-open" onclick="openUrl()">Safariで開く</button>
+  </div>
+
+  <div class="hint">
+    <span>index.html</span> の場合はファイル名欄を空白にするとURLから省略されます
+  </div>
+</div>
+
+<div class="history-card">
+  <div class="history-title">保存済みリポジトリ</div>
+  <div id="history-list"></div>
+</div>
+
+<script>
+  const USERNAME = 'enuhiro';
+  let currentUrl = '';
+  let repos = JSON.parse(localStorage.getItem('gh_repos2') || '[]');
+
+  function buildUrl(repo, file) {
+    if (!repo) return '';
+    const base = 'https://' + USERNAME + '.github.io/' + repo + '/';
+    const f = file.trim();
+    if (!f || f === 'index.html') return base;
+    return base + (f.endsWith('.html') ? f : f + '.html');
+  }
+
+  function update() {
+    const r = document.getElementById('rname').value.trim();
+    const f = document.getElementById('fname').value.trim();
+    const el = document.getElementById('url-out');
+    if (r) {
+      currentUrl = buildUrl(r, f);
+      el.textContent = currentUrl;
+      el.classList.remove('empty');
+    } else {
+      currentUrl = '';
+      el.textContent = 'リポジトリ名を入力してください';
+      el.classList.add('empty');
+    }
+    document.getElementById('btn-copy').textContent = 'コピー';
+    document.getElementById('btn-copy').classList.remove('copied');
+  }
+
+  function saveRepo() {
+    const r = document.getElementById('rname').value.trim();
+    const f = document.getElementById('fname').value.trim();
+    if (!r) return;
+    const entry = { repo: r, file: f };
+    repos = repos.filter(e => !(e.repo === r && e.file === f));
+    repos.unshift(entry);
+    localStorage.setItem('gh_repos2', JSON.stringify(repos));
+    renderHistory();
+    const btn = document.querySelector('.btn-save');
+    btn.textContent = '保存済!';
+    setTimeout(() => { btn.textContent = '保存'; }, 1500);
+  }
+
+  function selectRepo(i) {
+    const e = repos[i];
+    document.getElementById('rname').value = e.repo;
+    document.getElementById('fname').value = e.file || '';
+    update();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function deleteRepo(i) {
+    repos.splice(i, 1);
+    localStorage.setItem('gh_repos2', JSON.stringify(repos));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const el = document.getElementById('history-list');
+    if (repos.length === 0) {
+      el.innerHTML = '<div class="history-empty">まだ保存されていません</div>';
+      return;
+    }
+    el.innerHTML = repos.map((e, i) => `
+      <div class="repo-item">
+        <div class="repo-info" onclick="selectRepo(${i})">
+          <div class="repo-main">${e.repo}</div>
+          <div class="repo-file">${e.file || 'index.html（省略）'}</div>
+        </div>
+        <button class="btn-del" onclick="deleteRepo(${i})">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <line x1="2" y1="2" x2="12" y2="12" stroke="#e24b4a" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="12" y1="2" x2="2" y2="12" stroke="#e24b4a" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>`).join('');
+  }
+
+  function copyUrl() {
+    if (!currentUrl) return;
+    navigator.clipboard.writeText(currentUrl).then(() => {
+      const btn = document.getElementById('btn-copy');
+      btn.textContent = 'コピー完了!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function openUrl() {
+    if (!currentUrl) return;
+    window.open(currentUrl, '_blank');
+  }
+
+  renderHistory();
+</script>
+</body>
+</html>
