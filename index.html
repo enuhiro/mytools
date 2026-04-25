@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>GitHub Pages URL 生成</title>
+<title>GitHub Pages URL 生成 v2</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,22 +22,20 @@
   .logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
   .logo-text { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
   .logo-sub { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 1px; }
-  .fixed-user { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; }
-  .fixed-user-label { font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; flex-shrink: 0; }
-  .fixed-user-val { font-family: var(--mono); font-size: 14px; color: var(--accent); }
-  label { display: block; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
   .field { margin-bottom: 16px; }
+  label { display: block; font-size: 11px; font-family: var(--mono); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .label-note { color: #555; font-size: 10px; text-transform: none; letter-spacing: 0; margin-left: 6px; }
   .input-row { display: flex; gap: 8px; }
   input[type="text"] { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: var(--mono); font-size: 16px; padding: 13px 14px; outline: none; transition: border-color 0.15s; -webkit-appearance: none; min-width: 0; width: 100%; }
   input[type="text"]:focus { border-color: var(--accent); }
-  input[type="text"]::placeholder { color: #444; }
+  input[type="text"]::placeholder { color: #3a6e55; }
+  input[type="text"].overridden { color: #f9d97a; }
+  input[type="text"].overridden:focus { border-color: #f9d97a; }
   .btn-save { background: var(--accent-dim); border: 1px solid #2a5c42; border-radius: 10px; color: var(--accent); font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 0 16px; cursor: pointer; white-space: nowrap; transition: opacity 0.1s, transform 0.1s; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
   .btn-save:active { transform: scale(0.97); opacity: 0.8; }
   .url-preview { background: var(--accent-dim); border: 1px solid #2a5c42; border-radius: 12px; padding: 14px; margin: 4px 0 20px; min-height: 54px; display: flex; align-items: center; }
   .url-text { font-family: var(--mono); font-size: 13px; color: var(--accent); word-break: break-all; line-height: 1.7; flex: 1; }
   .url-text.empty { color: #3a5c4a; font-size: 12px; }
-  .url-seg { opacity: 0.5; }
-  .url-seg.active { opacity: 1; }
   .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   button { border: none; border-radius: 10px; font-family: var(--sans); font-size: 14px; font-weight: 600; padding: 14px 10px; cursor: pointer; transition: opacity 0.1s, transform 0.1s; -webkit-tap-highlight-color: transparent; }
   button:active { transform: scale(0.97); opacity: 0.85; }
@@ -54,7 +52,8 @@
   .repo-info { flex: 1; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .repo-info:active .repo-main { color: var(--accent); }
   .repo-main { font-family: var(--mono); font-size: 14px; color: var(--text); transition: color 0.1s; }
-  .repo-file { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .repo-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .repo-sub .user-tag { color: #f9d97a; }
   .btn-del { background: none; border: none; padding: 6px; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; opacity: 0.4; transition: opacity 0.1s; }
   .btn-del:active { opacity: 1; background: var(--red-dim); }
 </style>
@@ -70,13 +69,13 @@
     </div>
     <div>
       <div class="logo-text">GitHub Pages URL</div>
-      <div class="logo-sub">自動生成ツール</div>
+      <div class="logo-sub">自動生成ツール v2</div>
     </div>
   </div>
 
-  <div class="fixed-user">
-    <span class="fixed-user-label">User</span>
-    <span class="fixed-user-val">enuhiro</span>
+  <div class="field">
+    <label>GitHub ユーザー名 <span class="label-note">空欄なら enuhiro</span></label>
+    <input type="text" id="uname" placeholder="enuhiro" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="onUserInput()">
   </div>
 
   <div class="field">
@@ -88,7 +87,7 @@
   </div>
 
   <div class="field">
-    <label>HTML ファイル名 <span style="color:#555;font-size:10px">（index.html は省略可）</span></label>
+    <label>HTML ファイル名 <span class="label-note">index.html は省略可</span></label>
     <input type="text" id="fname" placeholder="index.html" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="update()">
   </div>
 
@@ -102,7 +101,8 @@
   </div>
 
   <div class="hint">
-    <span>index.html</span> の場合はファイル名欄を空白にするとURLから省略されます
+    ユーザー名は空欄のまま使えます。<br>
+    他の人のURLを作るときだけ入力してください。
   </div>
 </div>
 
@@ -112,14 +112,30 @@
 </div>
 
 <script>
-  const USERNAME = 'enuhiro';
+  const DEFAULT_USER = 'enuhiro';
   let currentUrl = '';
-  let repos = JSON.parse(localStorage.getItem('gh_repos2') || '[]');
+  let repos = JSON.parse(localStorage.getItem('gh_repos_v2') || '[]');
 
-  function buildUrl(repo, file) {
+  function getUser() {
+    const v = document.getElementById('uname').value.trim();
+    return v || DEFAULT_USER;
+  }
+
+  function onUserInput() {
+    const v = document.getElementById('uname').value.trim();
+    const el = document.getElementById('uname');
+    if (v) {
+      el.classList.add('overridden');
+    } else {
+      el.classList.remove('overridden');
+    }
+    update();
+  }
+
+  function buildUrl(user, repo, file) {
     if (!repo) return '';
-    const base = 'https://' + USERNAME + '.github.io/' + repo + '/';
-    const f = file.trim();
+    const base = 'https://' + user + '.github.io/' + repo + '/';
+    const f = (file || '').trim();
     if (!f || f === 'index.html') return base;
     return base + (f.endsWith('.html') ? f : f + '.html');
   }
@@ -127,9 +143,10 @@
   function update() {
     const r = document.getElementById('rname').value.trim();
     const f = document.getElementById('fname').value.trim();
+    const u = getUser();
     const el = document.getElementById('url-out');
     if (r) {
-      currentUrl = buildUrl(r, f);
+      currentUrl = buildUrl(u, r, f);
       el.textContent = currentUrl;
       el.classList.remove('empty');
     } else {
@@ -144,11 +161,12 @@
   function saveRepo() {
     const r = document.getElementById('rname').value.trim();
     const f = document.getElementById('fname').value.trim();
+    const uRaw = document.getElementById('uname').value.trim();
     if (!r) return;
-    const entry = { repo: r, file: f };
-    repos = repos.filter(e => !(e.repo === r && e.file === f));
+    const entry = { repo: r, file: f, user: uRaw }; // user空=default
+    repos = repos.filter(e => !(e.repo === r && e.file === f && e.user === uRaw));
     repos.unshift(entry);
-    localStorage.setItem('gh_repos2', JSON.stringify(repos));
+    localStorage.setItem('gh_repos_v2', JSON.stringify(repos));
     renderHistory();
     const btn = document.querySelector('.btn-save');
     btn.textContent = '保存済!';
@@ -157,15 +175,16 @@
 
   function selectRepo(i) {
     const e = repos[i];
+    document.getElementById('uname').value = e.user || '';
     document.getElementById('rname').value = e.repo;
     document.getElementById('fname').value = e.file || '';
-    update();
+    onUserInput();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function deleteRepo(i) {
     repos.splice(i, 1);
-    localStorage.setItem('gh_repos2', JSON.stringify(repos));
+    localStorage.setItem('gh_repos_v2', JSON.stringify(repos));
     renderHistory();
   }
 
@@ -175,19 +194,26 @@
       el.innerHTML = '<div class="history-empty">まだ保存されていません</div>';
       return;
     }
-    el.innerHTML = repos.map((e, i) => `
-      <div class="repo-item">
-        <div class="repo-info" onclick="selectRepo(${i})">
-          <div class="repo-main">${e.repo}</div>
-          <div class="repo-file">${e.file || 'index.html（省略）'}</div>
-        </div>
-        <button class="btn-del" onclick="deleteRepo(${i})">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <line x1="2" y1="2" x2="12" y2="12" stroke="#e24b4a" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="12" y1="2" x2="2" y2="12" stroke="#e24b4a" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>`).join('');
+    el.innerHTML = repos.map((e, i) => {
+      const displayUser = e.user || DEFAULT_USER;
+      const isDefault = !e.user;
+      const userHtml = isDefault
+        ? `<span>${displayUser}</span>`
+        : `<span class="user-tag">${displayUser}</span>`;
+      return `
+        <div class="repo-item">
+          <div class="repo-info" onclick="selectRepo(${i})">
+            <div class="repo-main">${e.repo}</div>
+            <div class="repo-sub">${userHtml} / ${e.file || 'index.html'}</div>
+          </div>
+          <button class="btn-del" onclick="deleteRepo(${i})">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <line x1="2" y1="2" x2="12" y2="12" stroke="#e24b4a" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="12" y1="2" x2="2" y2="12" stroke="#e24b4a" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>`;
+    }).join('');
   }
 
   function copyUrl() {
